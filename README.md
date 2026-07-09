@@ -1,135 +1,158 @@
-Your Personal AI Trading Copilot
+# Ace Trades Trading Copilot — Plain-English Guide
+
+This guide explains how the app works in everyday language. It is written for
+non-technical readers and for AI chat tools (ChatGPT, Claude, Manus, etc.) so you
+can paste any single file into a chat and ask for changes without breaking the rest
+of the app.
+
+## What this app does
+
+You upload a screenshot of a trading chart, and the app sends it to an AI that
+"reads" the chart and grades the setup — like having a trading coach look over your
+shoulder. It has five tabs:
+
+1. **Analyze Chart** — Upload a chart, pick a timeframe/session, and get a graded
+   analysis (A+ to "No Trade"), a 0–100 score, suggested entry/stop/target levels,
+   and which indicators it spotted. Every analysis is saved to your Journal.
+2. **Trading Plan** — Your personal rulebook: long criteria, short criteria, and
+   risk rules. You can edit any rule inline. It also shows a risk calculator based on
+   your account size. These rules are sent to the AI so it grades charts against
+   *your* plan.
+3. **News Impact** — Paste a headline or upcoming economic event (and/or upload a
+   screenshot) and the AI predicts how it could move the market: likely direction,
+   expected volatility, an impact rating, a beginner-friendly trade recommendation,
+   and plain-English reasoning. Either text or a screenshot is enough — you don't need
+   both.
+4. **Trader Review** — A second, more detailed write-up of a chart (a "full review")
+   with potential risks called out.
+5. **Journal** — A history of every analysis you have run, with stats (average score,
+   how often setups qualified) and a grade distribution chart.
+
+Your settings and journal are stored **in your browser** (localStorage) — nothing is
+saved on a server. Clearing your browser data clears them.
+
+## The files, and what each one does
+
+The app code lives in `src/`. Here is the map, grouped by job. Each file is small
+enough to paste into an AI tool on its own.
+
+### The "brain" / plumbing (no visuals)
+
+- **`src/lib/types.ts`** — The shape of the data. Defines what a "journal entry" and
+  a "settings" object look like, and the list of tab names. Start here if you want to
+  add a new field that flows through the app.
+- **`src/lib/storage.ts`** — Loading and saving to the browser. Holds the default
+  settings, plus the helpers that read/write settings and the journal in
+  localStorage. *Do not rename the storage keys* (`tc_settings_v1`, `tc_journal_v1`)
+  or existing users will lose their saved data.
+- **`src/lib/display.ts`** — Small formatting helpers: which color a grade gets, how a
+  timestamp is formatted, and the rotating "loading…" messages.
+
+### Reusable visual pieces (used by more than one tab)
+
+- **`src/components/shared.tsx`** — Little building blocks reused across tabs: score
+  bars and cards, the colored "chips", the red warning box, the section wrapper, and
+  the trade-level cards.
+- **`src/components/SettingsPanel.tsx`** — The pop-down settings form (ticker, account
+  size, risk percentages, etc.) that appears when you click the gear icon.
+- **`src/components/EditableRuleList.tsx`** — The list of rules you can click to edit,
+  delete, or add to. Used by the Trading Plan tab for long/short/risk rules.
+
+### One file per tab
+
+- **`src/components/tabs/AnalyzeTab.tsx`** — The Analyze Chart tab.
+- **`src/components/tabs/PlanTab.tsx`** — The Trading Plan tab + risk calculator.
+- **`src/components/tabs/NewsTab.tsx`** — The News Impact tab (news text + optional
+  screenshot → predicted market impact).
+- **`src/components/tabs/ReviewTab.tsx`** — The Trader Review tab.
+- **`src/components/tabs/JournalTab.tsx`** — The Journal tab + stats.
+
+### The shell that ties it together
+
+- **`src/pages/TradingCopilot.tsx`** — The top-level page: header, tab buttons, and it
+  decides which tab to show. It holds the current settings and journal and passes them
+  down to each tab. Think of it as the "frame" around the four tabs.
+- **`src/App.tsx`** / **`src/main.tsx`** — Standard startup files that boot the app.
+  You rarely need to touch these.
+
+### Other helpers (pre-existing)
+
+- **`src/components/loading-state.tsx`** — The spinner with rotating messages.
+- **`src/components/ui/file-upload.tsx`** — The drag-and-drop image uploader.
+- **`src/components/ui/`** — A library of generic UI parts (buttons, dialogs, etc.).
+
+## How data flows
+
+```
+You upload a chart  →  AnalyzeTab (or ReviewTab) turns the image into text (base64)
+                    →  sends image + your plan rules to the API server
+                    →  the API server asks an AI (Anthropic) to grade the chart
+                    →  the graded result comes back and is shown on screen
+                    →  the result is also saved to your Journal (in your browser)
+```
+
+- The frontend (this app) talks to a separate **API server** (in `artifacts/api-server`)
+  using auto-generated functions called `useAnalyzeChart`, `useReviewChart`, and
+  `useAnalyzeNews`. You do not call the AI directly from the browser; the API server
+  does that and keeps the secret key safe.
+- Your **settings and journal never leave your browser**. Only the chart image and the
+  plan rules are sent to the server when you ask for an analysis.
+
+## How to run it
 
-Welcome to Ace Trades, your  trading companion designed to help you become a more disciplined and confident trader.
+From the project root:
 
-Our goal isn't to tell you what to trade—it's to help you understand why a trade may or may not be worth taking.
+```bash
+pnpm --filter @workspace/trading-copilot run dev        # start the app
+pnpm --filter @workspace/trading-copilot run typecheck  # check for type errors
+```
 
-Ace Trades analyzes your chart using technical analysis, market structure, momentum, trend, confluence, and your selected trading strategy to provide objective feedback before you risk your capital.
+On Replit, the app also runs automatically via its workflow — you can just look at the
+preview pane.
 
-Think of Ace Trades as having an experienced trading coach available 24/7. Ace Trades can help you:
+## How to ask an AI to change something (copy-paste recipes)
 
-📊 Analyze chart screenshots
+Paste the relevant file(s) into your AI chat tool, then ask. Pointers below tell you
+which file to grab.
 
-⭐ Grade setups from A+ to F
+- **"Change the default account size / starting risk percentages."**
+  → Edit the defaults in `src/lib/storage.ts` (the `DEFAULT_SETTINGS` block).
 
-📈 Identify market structure
+- **"Add a new field to the settings form (e.g. a broker name)."**
+  → Add the field to `src/lib/types.ts` (the `TradingSettings` shape) and to
+  `DEFAULT_SETTINGS` in `src/lib/storage.ts`, then add an input in
+  `src/components/SettingsPanel.tsx`.
 
-🎯 Suggest potential entry zones
+- **"Change the colors used for grades."**
+  → Edit `gradeColors` / `gradeTextColor` in `src/lib/display.ts`.
 
-🛑 Recommend stop-loss placement
+- **"Reword the loading messages."**
+  → Edit `ANALYZE_MESSAGES` / `REVIEW_MESSAGES` / `NEWS_MESSAGES` in `src/lib/display.ts`.
 
-💰 Recommend take-profit targets
+- **"Change the fonts or the accent color."**
+  → Fonts and colors are defined as variables in `src/index.css`. The body font is
+  Helvetica (`--app-font-sans`), headings use a Futura-style display font
+  (`--app-font-display`, which loads "Jost" from Google Fonts in `index.html` as a
+  Futura fallback), and the royal-purple accent is `--primary` (and `--ring`). Use the
+  `font-display` Tailwind class for big headings.
 
-📉 Evaluate risk-to-reward
+- **"Change what the News Impact tab shows."**
+  → Edit `src/components/tabs/NewsTab.tsx`. The fields it renders (direction,
+  volatility, impact, etc.) come from the `/analysis/news` endpoint defined in the
+  API contract (`lib/api-spec/openapi.yaml`) and implemented in
+  `artifacts/api-server/src/routes/analysis.ts`.
 
-📚 Explain why a setup is strong or weak
+- **"Change what the Analyze tab shows in its results."**
+  → Edit `src/components/tabs/AnalyzeTab.tsx`.
 
-🧠 Help eliminate emotional trading
+- **"Add a new stat to the Journal."**
+  → Edit `src/components/tabs/JournalTab.tsx`.
 
-📝 Build consistency through journaling
+- **"Add a brand-new tab."**
+  → Add the tab name to `Tab` in `src/lib/types.ts`, create a new file under
+  `src/components/tabs/`, then add it to the tab list and content area in
+  `src/pages/TradingCopilot.tsx`.
 
-📖 Teach you how professional traders think.
-
-
-
-
-💡 Our Promise:
-
-Ace Trades will always strive to provide:
-
-Objective analysis
-Honest setup grading
-Educational feedback
-Risk-focused recommendations
-Continuous improvements based on real trading principles
-
-
-
-Our purpose is to help traders become more disciplined, knowledgeable, and confident—not to replace their judgment.
-
-
-Our software doesn't just give answers—it explains its reasoning so every trade becomes a learning opportunity.
-
-Don't simply copy recommendations.
-
-Instead, study:
-
-Why the AI likes the setup
-
-Why it rejects certain trades
-
-Market structure
-
-Support & resistance
-
-Trend direction
-
-Risk management
-
-Confirmation signals
-
-
-Over time, you'll begin recognizing high-quality setups on your own.
-
-The ultimate goal is for you to become the trader—not to depend on the AI forever.
-
-
-
-🧠 Best Practices
-
-To get the best results:
-
-✅ Upload clean, high-resolution chart screenshots.
-
-✅ Include enough candles for market context.
-
-✅ Follow your own trading rules.
-
-✅ Never risk more than you can afford to lose.
-
-✅ Focus on consistency rather than perfection.
-
-
-
-⚠️ Important Risk Disclaimer
-
-Ace Trades AI is an educational and decision-support tool.
-
-The information, trade grades, market analysis, suggested entries, exits, stop-losses, take-profit levels, and trading ideas provided by Ace Trades are generated using artificial intelligence and technical analysis models.
-
-These analyses are opinions and educational insights—not financial advice, investment advice, or guarantees of future performance.
-
-Financial markets are unpredictable.
-
-
-No trading strategy, indicator, or AI system can accurately predict market movements 100% of the time.
-
-Past performance never guarantees future results.
-
-Your Responsibility
-
-
-By using Ace Trades, you acknowledge and agree that:
-
-You are solely responsible for every trade you place.
-You are solely responsible for your trading account.
-You are solely responsible for your profits and losses.
-You make all final trading decisions independently.
-You understand that trading involves substantial financial risk, including the possibility of losing your entire investment.
-
-
-Ace Trades, its creator, affiliates, employees, partners, and licensors are not responsible or liable for any financial losses, missed opportunities, account drawdowns, margin calls, liquidation events, tax consequences, or other damages resulting from your use of this application or reliance on its analyses.
-
-Trade at your own risk and Remember...
-The best trader isn't the one who wins every trade.
-
-
-
-The best trader is the one who consistently follows a proven process, manages risk wisely, and continues learning.
-
-Thank you for choosing Ace Trades.
-
-We wish you disciplined execution, sound risk management, and long-term success in your trading journey.
-
-Trade smart. Stay disciplined. Trade responsibly. 📈
-
+**Tip for AI tools:** When you ask for a change, also paste `src/lib/types.ts` so the
+AI knows the data shapes, and mention "keep the localStorage keys and behavior the
+same" so saved user data keeps working.

@@ -1,0 +1,12 @@
+Add slogan to home page
+
+User asked to add the slogan "Worry Less, Profit More!" to the home page.
+
+Added it to the landing page hero (artifacts/trading-copilot/src/pages/
+Landing.tsx) as a prominent display-font line in the brand purple,
+between the main headline and the descriptive paragraph
+(data-testid="text-slogan").
+
+Note: the landing page only renders for signed-out users; dev test mode
+routes straight into the app, so verification was typecheck (clean) +
+static inspection. No behavior, routing, or contract changes.

@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "4rjbdblVi3FkXCYM3Oez-"
+uri = "file://dist/trading-copilot-source.zip"
+type = "unspecified"
+title = "Trading Copilot — source snapshot (zip)"
+
+[[outputs]]
+id = "DgfikbkC9XZ38YP-FtkWu"
+uri = "file://exports/trading-copilot-app-bundle.md"
+type = "text"
+title = "Trading Copilot — Full Source Bundle (single AI-editable file)"

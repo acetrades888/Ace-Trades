@@ -1,0 +1,1176 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: AI Trading Copilot API — multi-asset chart, news, and trade analysis
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: analysis
+    description: Chart analysis operations
+  - name: account
+    description: User account, settings and journal
+  - name: billing
+    description: Subscription and credit billing
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /analysis/analyze:
+    post:
+      operationId: analyzeChart
+      tags: [analysis]
+      summary: Analyze a chart image
+      description: Sends chart image to Claude Vision for trade setup grading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartAnalysisInput"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartAnalysisResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analysis/news:
+    post:
+      operationId: analyzeNews
+      tags: [analysis]
+      summary: Predict market impact from news
+      description: Sends news text and/or a screenshot to Claude to predict market impact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsAnalysisInput"
+      responses:
+        "200":
+          description: News impact prediction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsAnalysisResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analysis/review:
+    post:
+      operationId: reviewChart
+      tags: [analysis]
+      summary: Full trader review of a chart
+      description: Generates a comprehensive trader review mode analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartReviewInput"
+      responses:
+        "200":
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartReviewResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analysis/debrief:
+    post:
+      operationId: debriefTrade
+      tags: [analysis]
+      summary: Explain why a trade did not hit its target
+      description: Sends a post-trade chart and the trade details to Claude for a plain-English debrief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeDebriefInput"
+      responses:
+        "200":
+          description: Trade debrief
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeDebriefResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me:
+    get:
+      operationId: getMe
+      tags: [account]
+      summary: Current user account, plan and credit balance
+      responses:
+        "200":
+          description: Account info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [account]
+      summary: Get the user's trading plan settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSettings
+      tags: [account]
+      summary: Replace the user's trading plan settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradingSettings"
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /journal:
+    get:
+      operationId: getJournal
+      tags: [account]
+      summary: List the user's journal entries (newest first)
+      responses:
+        "200":
+          description: Journal entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: addJournalEntry
+      tags: [account]
+      summary: Add a journal entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalEntry"
+      responses:
+        "200":
+          description: Saved entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: clearJournal
+      tags: [account]
+      summary: Delete all of the user's journal entries
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /journal/import:
+    post:
+      operationId: importData
+      tags: [account]
+      summary: Bulk import journal entries and optionally settings (first-login migration)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportRequest"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /billing/plans:
+    get:
+      operationId: getPlans
+      tags: [billing]
+      summary: List purchasable plans and credit packs
+      responses:
+        "200":
+          description: Plans
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlansResponse"
+  /billing/checkout:
+    post:
+      operationId: createCheckout
+      tags: [billing]
+      summary: Create a Stripe Checkout session for a plan or credit pack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutRequest"
+      responses:
+        "200":
+          description: Checkout URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutUrlResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /billing/portal:
+    post:
+      operationId: createPortal
+      tags: [billing]
+      summary: Create a Stripe billing portal session
+      responses:
+        "200":
+          description: Portal URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutUrlResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /billing/verify:
+    post:
+      operationId: verifyCheckout
+      tags: [billing]
+      summary: Finalize a completed checkout and return refreshed account info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Refreshed account info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    ChartAnalysisInput:
+      type: object
+      required: [imageBase64, mediaType, timeframe, session, news, accountSize]
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded chart image
+        mediaType:
+          type: string
+          description: MIME type of the image (e.g. image/png)
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 30m, 1h, 4h, 1d]
+        session:
+          type: string
+          enum: [premarket, rth, afterhours]
+        news:
+          type: string
+          enum: [no, yes, just]
+        accountSize:
+          type: number
+          description: Account size in USD
+        context:
+          type: ["string", "null"]
+          description: Optional trader notes
+        analysisTime:
+          type: ["string", "null"]
+          description: Time of day (HH:MM, 24h) in ET the trader is evaluating entry
+        ticker:
+          type: ["string", "null"]
+          description: Market pair or ticker symbol
+        assetClass:
+          type: string
+          enum: [futures, stocks, forex, crypto]
+          description: Instrument asset class — drives session and timezone handling
+        autoDetect:
+          type: ["boolean", "null"]
+          description: >-
+            When true (default), the AI reads the instrument (symbol + asset class)
+            and timeframe directly from the chart and uses the provided
+            ticker/assetClass/timeframe only as a fallback hint. When false, the
+            provided ticker/assetClass/timeframe are authoritative and must not be
+            overridden from the chart (used after the trader corrects a detection).
+        maxRiskPct:
+          type: ["number", "null"]
+          description: Max risk per trade as percent of account
+        maxDailyDrawdownPct:
+          type: ["number", "null"]
+          description: Max daily drawdown as percent of account
+        minRR:
+          type: ["number", "null"]
+          description: Minimum risk/reward ratio
+        longCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined long entry criteria
+        shortCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined short entry criteria
+        riskRules:
+          type: array
+          items:
+            type: string
+          description: Extra risk rules beyond the numeric ones
+    ChartAnalysisResult:
+      type: object
+      required:
+        - grade
+        - score_total
+        - trend_strength
+        - momentum
+        - volume_confirmation
+        - risk_reward_score
+        - indicator_alignment
+        - bias
+        - trend_direction
+        - indicators_found
+        - indicators_missing
+        - support_levels
+        - resistance_levels
+        - liquidity_zones
+        - long_entry
+        - short_entry
+        - stop_loss
+        - target_1
+        - target_2
+        - rr_ratio
+        - rr_percent
+        - qualifies
+        - qualification_reason
+        - plan_compliance
+        - warnings
+        - full_analysis
+        - a_plus_factors
+        - timing
+      properties:
+        grade:
+          type: string
+        score_total:
+          type: number
+        trend_strength:
+          type: number
+        momentum:
+          type: number
+        volume_confirmation:
+          type: number
+        risk_reward_score:
+          type: number
+        indicator_alignment:
+          type: number
+        bias:
+          type: string
+        trend_direction:
+          type: string
+        indicators_found:
+          type: array
+          items:
+            type: string
+        indicators_missing:
+          type: array
+          items:
+            type: string
+        support_levels:
+          type: string
+        resistance_levels:
+          type: string
+        liquidity_zones:
+          type: string
+        long_entry:
+          type: string
+        short_entry:
+          type: string
+        stop_loss:
+          type: string
+        target_1:
+          type: string
+        target_2:
+          type: string
+        rr_ratio:
+          type: string
+        rr_percent:
+          type: number
+        qualifies:
+          type: boolean
+        qualification_reason:
+          type: string
+        plan_compliance:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        full_analysis:
+          type: string
+        a_plus_factors:
+          type: array
+          items:
+            type: string
+        timing:
+          $ref: "#/components/schemas/TimingAnalysis"
+        recommended_direction:
+          type: string
+          description: The single directional call to execute (Long, Short, or No Trade)
+        recommended_entry:
+          type: string
+          description: The single execution entry level/condition for the recommended direction
+        setup_conditions:
+          type: array
+          items:
+            type: string
+          description: The conditions/confluences this setup needs to be valid, in plain English
+        target_2_warranted:
+          type: boolean
+          description: Whether a second target / runner is genuinely warranted for this setup
+        target_2_reason:
+          type: string
+          description: Why a second target is or is not warranted
+        placed_setup:
+          $ref: "#/components/schemas/PlacedSetupEvaluation"
+        detected_ticker:
+          type: string
+          description: Instrument/symbol read from the chart (or the fallback used; empty if unknown)
+        detected_asset_class:
+          type: string
+          description: Asset class read from the chart (futures, stocks, forex, crypto, or unknown)
+        detected_timeframe:
+          type: string
+          description: Timeframe read from the chart (e.g. 5m; empty/unknown if not visible)
+    PlacedSetupEvaluation:
+      type: object
+      required: [detected]
+      properties:
+        detected:
+          type: boolean
+          description: Whether the trader drew their own trade (entry/stop/target markers) on the chart
+        direction:
+          type: string
+          description: The direction of the trader's drawn trade (Long, Short, or empty)
+        entry:
+          type: string
+          description: The drawn entry level read back from the chart
+        stop:
+          type: string
+          description: The drawn stop-loss level read back from the chart
+        targets:
+          type: string
+          description: The drawn target level(s) read back from the chart
+        indicators:
+          type: array
+          items:
+            type: string
+          description: Indicators detected as part of the trader's drawn setup
+        grade:
+          type: string
+          description: Grade for the drawn trade (A+ / A / B / C / No Trade)
+        assessment:
+          type: string
+          description: Short assessment of the trader's drawn trade
+        improvements:
+          type: array
+          items:
+            type: string
+          description: 2-4 concrete things that would lift the drawn trade toward A+
+    TimingAnalysis:
+      type: object
+      required:
+        - executionWindow
+        - flipSignals
+        - holdGuidance
+        - exitWatchlist
+        - sessionRisk
+      properties:
+        executionWindow:
+          type: string
+          description: Recommended time window to execute the trade
+        flipSignals:
+          type: array
+          items:
+            type: string
+          description: Signals that would confirm a trend flip
+        holdGuidance:
+          type: string
+          description: Estimated hold duration and how to manage the trade
+        exitWatchlist:
+          type: array
+          items:
+            type: string
+          description: What to watch for a possible reversal or exit
+        sessionRisk:
+          type: string
+          description: Time-of-day / session risk notes (e.g. chop zones, news windows)
+    ChartReviewInput:
+      type: object
+      required: [imageBase64, mediaType]
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded chart image
+        mediaType:
+          type: string
+          description: MIME type of the image
+        ticker:
+          type: ["string", "null"]
+          description: Market pair or ticker symbol
+        assetClass:
+          type: string
+          enum: [futures, stocks, forex, crypto]
+          description: Instrument asset class
+        timeframe:
+          type: ["string", "null"]
+          description: Chart timeframe
+        maxRiskPct:
+          type: ["number", "null"]
+        maxDailyDrawdownPct:
+          type: ["number", "null"]
+        minRR:
+          type: ["number", "null"]
+        accountSize:
+          type: ["number", "null"]
+        longCriteria:
+          type: array
+          items:
+            type: string
+        shortCriteria:
+          type: array
+          items:
+            type: string
+        riskRules:
+          type: array
+          items:
+            type: string
+    ChartReviewResult:
+      type: object
+      required:
+        - trade_grade
+        - confidence_score
+        - trend_alignment
+        - risk_reward_assessment
+        - long_setup_quality
+        - short_setup_quality
+        - support_resistance_quality
+        - volume_analysis
+        - full_review
+        - potential_risks
+      properties:
+        trade_grade:
+          type: string
+        confidence_score:
+          type: number
+        trend_alignment:
+          type: string
+        risk_reward_assessment:
+          type: string
+        long_setup_quality:
+          type: string
+        short_setup_quality:
+          type: string
+        support_resistance_quality:
+          type: string
+        volume_analysis:
+          type: string
+        full_review:
+          type: string
+        potential_risks:
+          type: array
+          items:
+            type: string
+    NewsAnalysisInput:
+      type: object
+      properties:
+        newsText:
+          type: ["string", "null"]
+          description: Pasted news headlines, economic event details, or notes
+        imageBase64:
+          type: ["string", "null"]
+          description: Base64-encoded screenshot of news (optional)
+        mediaType:
+          type: ["string", "null"]
+          description: MIME type of the screenshot (e.g. image/png)
+        ticker:
+          type: ["string", "null"]
+          description: Market the user trades
+        assetClass:
+          type: string
+          enum: [futures, stocks, forex, crypto]
+          description: Instrument asset class
+        accountSize:
+          type: ["number", "null"]
+        maxRiskPct:
+          type: ["number", "null"]
+        minRR:
+          type: ["number", "null"]
+        longCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined long entry criteria
+        shortCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined short entry criteria
+        riskRules:
+          type: array
+          items:
+            type: string
+          description: Extra risk rules
+    NewsAnalysisResult:
+      type: object
+      required:
+        - direction
+        - volatility
+        - impact
+        - confidence
+        - summary
+        - key_events
+        - affected_window
+        - trade_recommendation
+        - reasoning
+        - beginner_tip
+        - warnings
+      properties:
+        direction:
+          type: string
+          description: Predicted market direction (Bullish, Bearish, or Neutral)
+        volatility:
+          type: string
+          description: Expected volatility (High, Medium, or Low)
+        impact:
+          type: string
+          description: Impact rating on the market (High, Medium, or Low)
+        confidence:
+          type: number
+          description: Confidence in the prediction (0-100)
+        summary:
+          type: string
+          description: One or two sentence plain-English summary
+        key_events:
+          type: array
+          items:
+            type: string
+          description: Recent or upcoming events identified from the input
+        affected_window:
+          type: string
+          description: When the impact is most likely to be felt
+        trade_recommendation:
+          type: string
+          description: Plain-English recommendation tied to the trader's strategy
+        reasoning:
+          type: string
+          description: Beginner-friendly explanation of the prediction
+        beginner_tip:
+          type: string
+          description: A simple tip for a newer trader
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Caveats or risks to keep in mind
+    TradeDebriefInput:
+      type: object
+      required: [direction, outcome]
+      properties:
+        imageBase64:
+          type: ["string", "null"]
+          description: Base64-encoded chart screenshot showing how the trade played out (optional)
+        mediaType:
+          type: ["string", "null"]
+          description: MIME type of the screenshot (e.g. image/png)
+        direction:
+          type: string
+          enum: [long, short]
+          description: The direction of the trade that was taken
+        outcome:
+          type: string
+          enum: [stopped_out, missed_target, reversed, breakeven, other]
+          description: What happened to the trade
+        entry:
+          type: ["string", "null"]
+          description: Entry price or level the trader used
+        stop:
+          type: ["string", "null"]
+          description: Stop-loss price or level
+        target:
+          type: ["string", "null"]
+          description: Target / take-profit price or level the trade was aiming for
+        notes:
+          type: ["string", "null"]
+          description: Trader's own notes about what happened
+        ticker:
+          type: ["string", "null"]
+        assetClass:
+          type: string
+          enum: [futures, stocks, forex, crypto]
+        timeframe:
+          type: ["string", "null"]
+        longCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined long entry criteria
+        shortCriteria:
+          type: array
+          items:
+            type: string
+          description: User-defined short entry criteria
+        riskRules:
+          type: array
+          items:
+            type: string
+          description: Extra risk rules
+    TradeDebriefResult:
+      type: object
+      required:
+        - verdict
+        - summary
+        - primary_reason
+        - contributing_factors
+        - chart_read
+        - lessons
+        - next_time
+        - encouragement
+        - warnings
+      properties:
+        verdict:
+          type: string
+          description: One-line headline of why the trade did not hit its target
+        summary:
+          type: string
+          description: Two to three sentence plain-English explanation
+        primary_reason:
+          type: string
+          description: The single biggest reason the trade missed
+        contributing_factors:
+          type: array
+          items:
+            type: string
+          description: Other factors that contributed to the trade missing
+        chart_read:
+          type: string
+          description: Plain-English read of what the chart shows happened after entry
+        lessons:
+          type: array
+          items:
+            type: string
+          description: Specific, actionable lessons from this trade
+        next_time:
+          type: array
+          items:
+            type: string
+          description: Concrete things to do differently next time
+        encouragement:
+          type: string
+          description: One supportive, beginner-friendly sentence
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Caveats or risks to keep in mind
+    TradingSettings:
+      type: object
+      required:
+        - ticker
+        - defaultTimeframe
+        - lastSession
+        - lastNews
+        - maxRiskPct
+        - maxDailyDrawdownPct
+        - minRR
+        - accountSize
+        - longCriteria
+        - shortCriteria
+        - riskRules
+      properties:
+        ticker:
+          type: string
+        assetClass:
+          type: string
+          enum: [futures, stocks, forex, crypto]
+          description: Instrument asset class
+        pointValue:
+          type: number
+          description: Account-currency P&L per 1.0 price move per 1 unit
+        tickSize:
+          type: number
+          description: Minimum price increment for the instrument
+        quantityLabel:
+          type: string
+          description: Unit label for position size (e.g. contracts, shares, lots, units)
+        currency:
+          type: string
+          description: Account/quote currency code (e.g. USD)
+        defaultTimeframe:
+          type: string
+          enum: [1m, 5m, 15m, 30m, 1h, 4h, 1d]
+        lastSession:
+          type: string
+          enum: [premarket, rth, afterhours]
+        lastNews:
+          type: string
+          enum: [no, yes, just]
+        maxRiskPct:
+          type: number
+        maxDailyDrawdownPct:
+          type: number
+        minRR:
+          type: number
+        accountSize:
+          type: number
+        longCriteria:
+          type: array
+          items:
+            type: string
+        shortCriteria:
+          type: array
+          items:
+            type: string
+        riskRules:
+          type: array
+          items:
+            type: string
+    JournalEntry:
+      type: object
+      required:
+        - id
+        - timestamp
+        - ticker
+        - timeframe
+        - session
+        - grade
+        - score_total
+        - bias
+        - qualifies
+        - rr_ratio
+        - full_analysis
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: number
+        ticker:
+          type: string
+        timeframe:
+          type: string
+        session:
+          type: string
+        grade:
+          type: string
+        score_total:
+          type: number
+        bias:
+          type: string
+        qualifies:
+          type: boolean
+        rr_ratio:
+          type: string
+        full_analysis:
+          type: string
+        analysisTime:
+          type: string
+        timing:
+          $ref: "#/components/schemas/TimingAnalysis"
+    SettingsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          anyOf:
+            - $ref: "#/components/schemas/TradingSettings"
+            - type: "null"
+    JournalListResponse:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/JournalEntry"
+    OkResponse:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+    ImportRequest:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/JournalEntry"
+        settings:
+          anyOf:
+            - $ref: "#/components/schemas/TradingSettings"
+            - type: "null"
+    ImportResult:
+      type: object
+      required:
+        - count
+        - settingsImported
+      properties:
+        count:
+          type: number
+        settingsImported:
+          type: boolean
+    MeResponse:
+      type: object
+      required:
+        - userId
+        - email
+        - plan
+        - unlimited
+        - subscriptionStatus
+        - monthlyCredits
+        - packCredits
+        - totalCredits
+        - canUse
+        - creditCost
+        - unlimitedUntil
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          nullable: true
+        plan:
+          type: string
+          enum: [none, basic, pro, gold, lifetime]
+        unlimited:
+          type: boolean
+        subscriptionStatus:
+          type: string
+          nullable: true
+        monthlyCredits:
+          type: number
+        packCredits:
+          type: number
+        totalCredits:
+          type: number
+        canUse:
+          type: boolean
+        creditCost:
+          type: number
+        unlimitedUntil:
+          type: string
+          nullable: true
+          description: ISO timestamp when time-boxed unlimited (Gold) access expires, or null.
+    Plan:
+      type: object
+      required:
+        - priceId
+        - productId
+        - name
+        - amount
+        - currency
+        - kind
+        - unlimited
+      properties:
+        priceId:
+          type: string
+        productId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: number
+        currency:
+          type: string
+        interval:
+          type: string
+          nullable: true
+        intervalCount:
+          type: number
+          nullable: true
+        kind:
+          type: string
+          enum: [subscription, credit_pack, lifetime, gold]
+        tier:
+          type: string
+          nullable: true
+        credits:
+          type: number
+          nullable: true
+        unlimited:
+          type: boolean
+    PlansResponse:
+      type: object
+      required:
+        - plans
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/Plan"
+    CheckoutRequest:
+      type: object
+      required:
+        - priceId
+      properties:
+        priceId:
+          type: string
+    CheckoutUrlResponse:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+    VerifyRequest:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
